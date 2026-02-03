@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "todo-app": {
+      "command": "python",
+      "args": ["backend/mcp_server.py"],
+      "env": {
+        "DATABASE_URL": "postgresql://neondb_owner:npg_5hLWKBc6NeAT@ep-broad-wind-ad5ugihc-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+        "MCP_USER_ID": "REPLACE_WITH_YOUR_USER_ID"
+      },
+      "cwd": "/mnt/d/todo_phase_ll/phase1_todo"
+    }
+  }
+}

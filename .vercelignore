@@ -1,0 +1,17 @@
+src/
+history/
+specs/
+.claude/
+.specify/
+*.md
+.git
+.env.local
+.env.*.local
+node_modules
+.next
+__pycache__
+*.pyc
+.venv
+.pytest_cache
+.mypy_cache
+.ruff_cache
