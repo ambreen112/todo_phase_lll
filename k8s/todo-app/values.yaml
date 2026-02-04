@@ -1,0 +1,93 @@
+# Default values for todo-app Helm chart
+# This is a YAML-formatted file.
+
+# Global settings
+nameOverride: ""
+fullnameOverride: ""
+
+# Frontend configuration
+frontend:
+  replicaCount: 2
+
+  image:
+    repository: todo-frontend
+    tag: local
+    pullPolicy: Never  # Use local images in Minikube
+
+  service:
+    type: NodePort
+    port: 3000
+    nodePort: 30080  # Access via http://<minikube-ip>:30080
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  livenessProbe:
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Backend configuration
+backend:
+  replicaCount: 1
+
+  image:
+    repository: todo-backend
+    tag: local
+    pullPolicy: Never  # Use local images in Minikube
+
+  service:
+    type: ClusterIP
+    port: 8000
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+  livenessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Application configuration (non-sensitive)
+config:
+  environment: "development"
+  backendUrl: "http://todo-app-backend:8000"
+  frontendUrl: "http://localhost:30080"
+  openaiBaseUrl: "https://openrouter.ai/api/v1"
+  openaiModel: "google/gemini-2.0-flash-thinking-exp:free"
+
+# Secrets configuration
+secrets:
+  # Set to false if using an existing secret
+  create: true
+  # Name of existing secret (if create is false)
+  existingSecret: ""
+  # Values for secrets (replace with actual values before deployment)
+  # WARNING: Do not commit real secrets to version control!
+  databaseUrl: "postgresql://user:password@host:5432/dbname"
+  jwtSecretKey: "your-super-secret-jwt-key-change-me"
+  openaiApiKey: "sk-your-openrouter-api-key"

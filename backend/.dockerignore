@@ -65,8 +65,6 @@ api/
 src/lib/
 test_acceptance_criteria.py
 demo.py
-requirements.txt
-requirements-prod.txt
 vercel.json
 .vercelignore
 .claude/

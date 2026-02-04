@@ -232,3 +232,147 @@ This project follows **Spec-Driven Development (SDD)** methodology:
 3. **Tasks**: Implementation steps
 4. **PHR** (`history/prompts/`): Prompt History Records for traceability
 5. **ADR** (`history/adr/`): Architecture Decision Records
+
+## Kubernetes Deployment (Phase 4)
+
+Deploy the application to a local Kubernetes cluster using Minikube and Helm.
+
+### Prerequisites
+
+- Docker Desktop
+- Minikube v1.32+
+- Helm v3.14+
+- kubectl
+
+### Quick Start
+
+1. **Start Minikube:**
+```bash
+minikube start --driver=docker --memory=3072 --cpus=2
+```
+
+2. **Build images in Minikube:**
+```bash
+eval $(minikube docker-env)
+docker build -t todo-frontend:local ./frontend
+docker build -t todo-backend:local ./backend
+```
+
+3. **Deploy with Helm:**
+```bash
+kubectl create namespace todo-app
+helm upgrade --install todo-app ./k8s/todo-app \
+  --namespace todo-app \
+  --set frontend.image.pullPolicy=Never \
+  --set backend.image.pullPolicy=Never
+```
+
+4. **Access the application:**
+```bash
+# Start port-forwarding (required for WSL/Docker Desktop)
+kubectl port-forward -n todo-app svc/todo-app-frontend 3000:3000 --address=0.0.0.0 &
+kubectl port-forward -n todo-app svc/todo-app-backend 8000:8000 --address=0.0.0.0 &
+```
+
+Then open: http://localhost:3000
+
+### Kubernetes Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Minikube Cluster                      │
+│  ┌────────────────────────────────────────────────────┐ │
+│  │                  todo-app namespace                 │ │
+│  │                                                     │ │
+│  │  ┌─────────────────┐      ┌─────────────────┐     │ │
+│  │  │   Frontend      │      │    Backend      │     │ │
+│  │  │   (2 replicas)  │      │   (1 replica)   │     │ │
+│  │  │   Port: 3000    │─────▶│   Port: 8000    │     │ │
+│  │  └─────────────────┘      └─────────────────┘     │ │
+│  │         │                         │               │ │
+│  │  ┌──────┴──────┐          ┌──────┴──────┐        │ │
+│  │  │  NodePort   │          │  ClusterIP  │        │ │
+│  │  │   :30080    │          │    :8000    │        │ │
+│  │  └─────────────┘          └─────────────┘        │ │
+│  └────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Helm Chart Structure
+
+```
+k8s/todo-app/
+├── Chart.yaml              # Chart metadata
+├── values.yaml             # Default configuration
+├── .helmignore
+└── templates/
+    ├── _helpers.tpl        # Template helpers
+    ├── configmap.yaml      # Environment configuration
+    ├── secrets.yaml        # Sensitive data
+    ├── backend-deployment.yaml
+    ├── backend-service.yaml
+    ├── frontend-deployment.yaml
+    └── frontend-service.yaml
+```
+
+### Configuration
+
+Edit `k8s/todo-app/values.yaml` to customize:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `frontend.replicas` | 2 | Number of frontend pods |
+| `backend.replicas` | 1 | Number of backend pods |
+| `frontend.service.nodePort` | 30080 | Frontend NodePort |
+| `config.environment` | development | Environment name |
+
+### Useful Commands
+
+```bash
+# Check pod status
+kubectl get pods -n todo-app
+
+# View logs
+kubectl logs -n todo-app deployment/todo-app-frontend
+kubectl logs -n todo-app deployment/todo-app-backend
+
+# Scale frontend
+kubectl scale deployment todo-app-frontend -n todo-app --replicas=3
+
+# Restart deployment
+kubectl rollout restart deployment/todo-app-backend -n todo-app
+
+# Teardown
+helm uninstall todo-app -n todo-app
+kubectl delete namespace todo-app
+```
+
+### Scripts
+
+| Script | Description |
+|--------|-------------|
+| `scripts/local-deploy.sh` | Full deployment automation |
+| `scripts/local-teardown.sh` | Clean teardown |
+
+### Troubleshooting
+
+**Port already in use:**
+```bash
+# Find and kill existing port-forward
+lsof -i :3000
+kill <PID>
+```
+
+**Pods not starting:**
+```bash
+kubectl describe pod -n todo-app <pod-name>
+kubectl logs -n todo-app <pod-name>
+```
+
+**Image not found:**
+```bash
+# Make sure you're using Minikube's Docker
+eval $(minikube docker-env)
+docker images | grep todo
+```
+"# todo_phase_iv" 
