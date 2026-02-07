@@ -88,3 +88,4 @@ coverage/
 *.userosscache
 .env.example
 .env
+.vercel
